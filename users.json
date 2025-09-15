@@ -1,0 +1,14 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "password": "admin123",
+      "companies": ["Company A", "Company B"]
+    },
+    {
+      "username": "user1",
+      "password": "pass123",
+      "companies": ["Company C"]
+    }
+  ]
+}
