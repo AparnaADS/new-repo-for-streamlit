@@ -7,17 +7,17 @@ from datetime import datetime
 # ------------------- CONFIG -------------------
 st.set_page_config(page_title="📊 Profit & Loss Dashboard", layout="wide")
 
-WEBHOOK_URL = "https://hook.eu2.make.com/5naam9qq4wr6ttvesd9cn3sdzvxaxu3d" 
- #             https://hook.eu2.make.com/5naam9qq4wr6ttvesd9cn3sdzvxaxu3d
+WEBHOOK_URL = "https://hook.eu2.make.com/5naam9qq4wr6ttvesd9cn3sdzvxaxu3d"  # Replace with your Make webhook URL
+
 
 # ------------------- FETCH DATA -------------------
-def fetch_pl_data(from_date=None, to_date=None):
+def fetch_pl_data(from_date, to_date):
     """Fetch both Accrual and Cash P&L JSON from webhook with date filters"""
     try:
         if not (from_date and to_date):
             return {"Accrual": [], "Cash": []}
 
-        # Payloads for both bases
+        # Payloads for both accrual and cash basis
         accrual_payload = {
             "from_date": from_date.strftime("%Y-%m-%d"),
             "to_date": to_date.strftime("%Y-%m-%d"),
@@ -28,10 +28,6 @@ def fetch_pl_data(from_date=None, to_date=None):
             "to_date": to_date.strftime("%Y-%m-%d"),
             "cash_basis": "true"
         }
-
-        # Debug logs
-        #st.write("📤 Sending Accrual payload:", accrual_payload)
-        #t.write("📤 Sending Cash payload:", cash_payload)
 
         # Send both requests
         accrual_resp = requests.post(WEBHOOK_URL, json=accrual_payload, timeout=20)
@@ -107,8 +103,10 @@ def process_pl_data(pl_sections):
         st.error(f"⚠️ Error processing data: {e}")
         return metrics, pd.DataFrame()
 
+
 # ------------------- DISPLAY SECTION -------------------
 def display_section(metrics, exp_df, basis):
+    """Displays the financial metrics and operating expenses."""
     col1, col2, col3, col4, col5, col6 = st.columns(6)
     col1.metric("Sales", f"AED {metrics.get('Sales', 0):,.2f}")
     col2.metric("COGS", f"AED {metrics.get('COGS', 0):,.2f}")
@@ -128,8 +126,10 @@ def display_section(metrics, exp_df, basis):
         )
         st.plotly_chart(fig_expenses, use_container_width=True)
 
+
 # ------------------- MAIN APP -------------------
 def main():
+    """Main function to render the dashboard"""
     st.markdown('<h1 class="main-header">💰 Profit & Loss Dashboard</h1>', unsafe_allow_html=True)
 
     # Sidebar Date filter
@@ -146,7 +146,6 @@ def main():
 
     from_date, to_date = None, None
     if len(date_range) == 2:
-        # Convert to datetime so strftime works correctly
         from_date = datetime.combine(date_range[0], datetime.min.time())
         to_date = datetime.combine(date_range[1], datetime.min.time())
 
@@ -172,6 +171,7 @@ def main():
     accrual_metrics, accrual_exp = process_pl_data(accrual_sections)
     cash_metrics, cash_exp = process_pl_data(cash_sections)
 
+    # Display accrual basis
     st.subheader("📂 Accrual Basis")
     if accrual_metrics:
         display_section(accrual_metrics, accrual_exp, "Accrual")
@@ -180,11 +180,13 @@ def main():
 
     st.markdown("---")
 
+    # Display cash basis
     st.subheader("📂 Cash Basis")
     if cash_metrics:
         display_section(cash_metrics, cash_exp, "Cash")
     else:
         st.error("❌ No cash data available.")
+
 
 if __name__ == "__main__":
     main()
